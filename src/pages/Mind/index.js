@@ -1,15 +1,16 @@
 import * as React from 'react';
-import { Icon, Menu, Dropdown, Popover, Tooltip, Button, Select, Tag } from 'antd';
+import {Icon, Menu, Dropdown, Popover, Tooltip, Button, Select, Tag} from 'antd';
 import './style.less';
-import { partial, isEmpty, isUndefined, isString } from 'lodash';
+import {partial, isEmpty, isUndefined, isString} from 'lodash';
 import * as editorCommand from '../../command/EditorCommand';
 import HyperLink from './HyperLink';
 import NodeLink from './NodeLink';
 import ImageUpload from './Image';
 import ColorPicker from './ColorPicker';
+import NoteAddDrawer from "./nodeAddDrawer";
 
 
-const { Option } = Select;
+const {Option} = Select;
 
 class App extends React.Component {
     constructor(props) {
@@ -25,7 +26,7 @@ class App extends React.Component {
                 hyperlink: ''
             },
             currentResource: [],
-            image: false,
+            drawerVisible: false
         }
     }
 
@@ -45,7 +46,6 @@ class App extends React.Component {
     }
 
 
-
     setHyperlink = (visible) => {
         this.setState({
             hyperlink: visible
@@ -59,12 +59,16 @@ class App extends React.Component {
     }
 
     setImage = (visible) => {
-        this.setState({ image: visible });
+        this.setState({image: visible});
+    }
+
+    setPariWise = (visible) => {
+        this.setState({drawerVisible: visible});
     }
 
 
     handleHyperlink = () => {
-        editorCommand.handleHyperlink({ url: null, title: '' });
+        editorCommand.handleHyperlink({url: null, title: ''});
         //更新其中的值
         // window.editor.runtime.nodeInfo = { url: null, title: '' };
     }
@@ -81,21 +85,21 @@ class App extends React.Component {
 
     /**
      * 设置背景颜色
-     * @param {*} color 
+     * @param {*} color
      */
     setBgColor = (color) => {
         // if (!this.props.editable) return;
-        this.setState({ bgColor: color });
+        this.setState({bgColor: color});
         editorCommand.handleBgColor(color);
     }
 
 
     /**
      * 设置字体颜色
-     * @param {}} color 
+     * @param {}} color
      */
     setFontColor = (color) => {
-        this.setState({ fontColor: color });
+        this.setState({fontColor: color});
         editorCommand.handleForeColor(color);
     }
 
@@ -170,11 +174,13 @@ class App extends React.Component {
 
 
     renderTags = () => {
-        const { isNode, tags } = this.props;
+        const {isNode, tags} = this.props;
         if (!isUndefined(window.minder)) {
             return tags.map(item => {
                 let color = window.minder.getResourceColor(item).toHEX();
-                return <Tag style={{ cursor: 'pointer' }} onClick={() => { this.onTagSelect(item) }} className={`resource-tag ${isNode ? '' : 'disabled'}`} color={color}>{item}</Tag>
+                return <Tag style={{cursor: 'pointer'}} onClick={() => {
+                    this.onTagSelect(item)
+                }} className={`resource-tag ${isNode ? '' : 'disabled'}`} color={color}>{item}</Tag>
             })
         }
     }
@@ -185,12 +191,11 @@ class App extends React.Component {
 
 
     handleImage = () => {
-        editorCommand.handleImage({ url: null, title: '' });
+        editorCommand.handleImage({url: null, title: ''});
         setTimeout(() => {
             window.minder.fire('contentchange');
         }, 500)
     }
-
 
 
     /**
@@ -203,7 +208,7 @@ class App extends React.Component {
 
     /**
      * 设置执行结果
-     * @param {*} key 
+     * @param {*} key
      */
     handleExecuteResult = (key) => {
         editorCommand.handleExecutor(key === 0 ? "" : this.props.userName);
@@ -218,15 +223,15 @@ class App extends React.Component {
     render() {
 
 
-        const { isNode, nodeInfo, hasUndo, hasRedo } = this.props;
+        const {isNode, nodeInfo, hasUndo, hasRedo} = this.props;
 
-        const { hyperlink, image, fontColor, bgColor, nodeLink } = this.state;
+        const {hyperlink, image, fontColor, bgColor, nodeLink, drawerVisible} = this.state;
 
         var priorityList = [];
         for (let i = 0; i < 3; i++) {
-            priorityList.push(<Button disabled={!isNode} onClick={partial(this.handlePriority, i + 1)} type='link' size='small' className={'priority-btn p' + String(i + 1)}>P{i}</Button>);
+            priorityList.push(<Button disabled={!isNode} onClick={partial(this.handlePriority, i + 1)} type='link'
+                                      size='small' className={'priority-btn p' + String(i + 1)}>P{i}</Button>);
         }
-
 
 
         // const addChild = () => {
@@ -242,13 +247,13 @@ class App extends React.Component {
         // }
 
 
-
         const hyperlinkMenu = <Menu>
             <Menu.Item>
                 <a onClick={partial(this.setHyperlink, true)}>{isEmpty(nodeInfo.hyperlink) || isEmpty(nodeInfo.hyperlink.url) ? '插入超链接' : '打开超链接'}</a>
             </Menu.Item>
             {
-                isEmpty(nodeInfo.hyperlink) || isEmpty(nodeInfo.hyperlink.url) ? null : <Menu.Item><a onClick={partial(this.handleHyperlink)}>移除超链接</a></Menu.Item>
+                isEmpty(nodeInfo.hyperlink) || isEmpty(nodeInfo.hyperlink.url) ? null :
+                    <Menu.Item><a onClick={partial(this.handleHyperlink)}>移除超链接</a></Menu.Item>
             }
 
             <Menu.Item>
@@ -256,9 +261,10 @@ class App extends React.Component {
             </Menu.Item>
 
             {
-                isEmpty(nodeInfo.nodeLink) ? null : <Menu.Item><a onClick={partial(this.handleNodeLink)}>移除主题链接</a></Menu.Item>
+                isEmpty(nodeInfo.nodeLink) ? null :
+                    <Menu.Item><a onClick={partial(this.handleNodeLink)}>移除主题链接</a></Menu.Item>
             }
-        </Menu >
+        </Menu>
 
         const imageMenu = isEmpty(nodeInfo.image) ? <Menu>
             <Menu.Item><a onClick={partial(this.setImage, true)}>插入图片</a></Menu.Item>
@@ -267,15 +273,18 @@ class App extends React.Component {
             <Menu.Item><a onClick={partial(this.handleImage)}>移除图片</a></Menu.Item>
         </Menu>
 
+
         const commentMenu = <Menu>
             <Menu.Item><a onClick={partial(this.setNote, true)}>打开备注</a></Menu.Item>
         </Menu>
 
-
+        const pariWise = <Menu>
+            <Menu.Item><a onClick={partial(this.setPariWise, true)}>用例设计</a></Menu.Item>
+        </Menu>
 
         return (
-            <div className='minder-container' style={{ height: this.props.expand ? '80px' : '0px' }}>
-                <div className='inline' style={{ width: 70 }}>
+            <div className='minder-container' style={{height: this.props.expand ? '80px' : '0px'}}>
+                <div className='inline' style={{width: 70}}>
                     <Button
                         onClick={() => {
                             window.editor.history.undo()
@@ -376,7 +385,7 @@ class App extends React.Component {
 
                 }
 
-                <div className='inline' style={{ textAlign: 'center', width: 200 }}>
+                <div className='inline' style={{textAlign: 'center', width: 200}}>
                     {
                         !this.props.readOnly ? null :
                             <Dropdown overlay={commentMenu} trigger={['click']} disabled={!isNode}>
@@ -386,15 +395,13 @@ class App extends React.Component {
                                     className='big-icon'
 
                                 >
-                                    <Icon style={{ fontSize: "1.6em" }} type="file-text" />
-                                    <br />
+                                    <Icon style={{fontSize: "1.6em"}} type="file-text"/>
+                                    <br/>
                                     备注
-                                    <Icon type="down" />
+                                    <Icon type="down"/>
                                 </Button>
                             </Dropdown>
                     }
-
-
 
                     <Dropdown overlay={hyperlinkMenu} trigger={['click']} disabled={!isNode}>
                         <Button
@@ -403,10 +410,10 @@ class App extends React.Component {
                             className='big-icon'
 
                         >
-                            <Icon style={{ fontSize: "1.6em" }} type="link" />
-                            <br />
+                            <Icon style={{fontSize: "1.6em"}} type="link"/>
+                            <br/>
                             链接
-                            <Icon type="down" />
+                            <Icon type="caret-down"/>
                         </Button>
                     </Dropdown>
                     {
@@ -417,45 +424,122 @@ class App extends React.Component {
                                 className='big-icon'
 
                             >
-                                <Icon style={{ fontSize: "1.6em" }} type="picture" />
-                                <br />
+                                <Icon style={{fontSize: "1.6em"}} type="picture"/>
+                                <br/>
                                 图片
-                                <Icon type="down" />
+                                <Icon type="caret-down"/>
                             </Button>
                         </Dropdown>
-
                     }
-
+                    {
+                        <Dropdown overlay={pariWise} trigger={['click']} disabled={!isNode}>
+                            <Button type="link"
+                                    size="small"
+                                    className="big-icon"
+                            >
+                                <Icon style={{fontSize: '1.6em'}} type="tool"/>
+                                <br/>
+                                工具
+                                <Icon type="caret-down"/>
+                            </Button>
+                        </Dropdown>
+                    }
                 </div>
                 {
                     // 执行用例的结果
-                    this.props.readOnly ? <div className='inline' style={{ width: 150 }}>
+                    this.props.readOnly ? <div className='inline' style={{width: 150}}>
                         <Tooltip placement="top" title={'移除结果'}>
-                            <Button onClick={() => { this.handleExecuteResult(0) }} type='link' style={{ padding: "0px 3px" }}>
-                                <i aria-label="图标: minus-circle" className="anticon anticon-minus-circle" style={{ fontSize: "18px", color: "rgba(0, 0, 0, 0.6)" }}><svg viewBox="64 64 896 896" focusable="false" className="" data-icon="minus-circle" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm192 472c0 4.4-3.6 8-8 8H328c-4.4 0-8-3.6-8-8v-48c0-4.4 3.6-8 8-8h368c4.4 0 8 3.6 8 8v48z"></path></svg></i>
+                            <Button onClick={() => {
+                                this.handleExecuteResult(0)
+                            }} type='link' style={{padding: "0px 3px"}}>
+                                <i aria-label="图标: minus-circle" className="anticon anticon-minus-circle"
+                                   style={{fontSize: "18px", color: "rgba(0, 0, 0, 0.6)"}}>
+                                    <svg viewBox="64 64 896 896" focusable="false" className="" data-icon="minus-circle"
+                                         width="1em" height="1em" fill="currentColor" aria-hidden="true">
+                                        <path
+                                            d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm192 472c0 4.4-3.6 8-8 8H328c-4.4 0-8-3.6-8-8v-48c0-4.4 3.6-8 8-8h368c4.4 0 8 3.6 8 8v48z"></path>
+                                    </svg>
+                                </i>
                             </Button>
                         </Tooltip>
 
                         <Tooltip placement="top" title={'失败'}>
-                            <Button onClick={() => { this.handleExecuteResult(1) }} type='link' style={{ padding: "0px 3px" }}>
-                                <i aria-label="图标: fail" className="anticon anticon-fail" style={{ width: "18px", height: "18px" }}><svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M0 512A512 512 0 1 0 512 0 512 512 0 0 0 0 512z" fill="#FFED83" fillOpacity="1" data-spm-anchor-id="a313x.7781069.0.i41"></path><path d="M782.826255 253.254397a37.559846 37.559846 0 0 1 0 51.727156l-465.48949 465.599314a36.571429 36.571429 0 0 1-51.727155-51.727156l465.489489-465.599314a37.559846 37.559846 0 0 1 51.727156 0z" fill="#d81e06" fillOpacity="1" data-spm-anchor-id="a313x.7781069.0.i44"></path><path d="M265.554698 253.254397a37.559846 37.559846 0 0 1 51.727155 0l465.48949 465.48949a36.571429 36.571429 0 0 1-51.727156 51.727155L265.554698 305.091377a37.559846 37.559846 0 0 1 0-51.83698z" fill="#d81e06" fillOpacity="1" data-spm-anchor-id="a313x.7781069.0.i42"></path></svg></i>
+                            <Button onClick={() => {
+                                this.handleExecuteResult(1)
+                            }} type='link' style={{padding: "0px 3px"}}>
+                                <i aria-label="图标: fail" className="anticon anticon-fail"
+                                   style={{width: "18px", height: "18px"}}>
+                                    <svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M0 512A512 512 0 1 0 512 0 512 512 0 0 0 0 512z" fill="#FFED83"
+                                              fillOpacity="1" data-spm-anchor-id="a313x.7781069.0.i41"></path>
+                                        <path
+                                            d="M782.826255 253.254397a37.559846 37.559846 0 0 1 0 51.727156l-465.48949 465.599314a36.571429 36.571429 0 0 1-51.727155-51.727156l465.489489-465.599314a37.559846 37.559846 0 0 1 51.727156 0z"
+                                            fill="#d81e06" fillOpacity="1"
+                                            data-spm-anchor-id="a313x.7781069.0.i44"></path>
+                                        <path
+                                            d="M265.554698 253.254397a37.559846 37.559846 0 0 1 51.727155 0l465.48949 465.48949a36.571429 36.571429 0 0 1-51.727156 51.727155L265.554698 305.091377a37.559846 37.559846 0 0 1 0-51.83698z"
+                                            fill="#d81e06" fillOpacity="1"
+                                            data-spm-anchor-id="a313x.7781069.0.i42"></path>
+                                    </svg>
+                                </i>
                             </Button>
                         </Tooltip>
                         <Tooltip placement="top" title={'通过'}>
-                            <Button onClick={() => { this.handleExecuteResult(2) }} type='link' style={{ padding: "0px 3px" }}>
-                                <i aria-label="图标: checked" className="anticon anticon-checked" style={{ width: "18px", height: "18px" }}><svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M509.750303 514.249697m-509.750303 0a509.750303 509.750303 0 1 0 1019.500606 0 509.750303 509.750303 0 1 0-1019.500606 0Z" fill="#6AC259" fillOpacity="1"></path><path d="M250.957576 537.05697a19.859394 19.859394 0 0 1 0-28.780606l28.780606-28.780606a19.859394 19.859394 0 0 1 28.780606 0l2.01697 2.094545 113.105454 121.250909a9.929697 9.929697 0 0 0 14.351515 0L713.69697 317.129697h2.094545a19.859394 19.859394 0 0 1 28.780606 0l28.780606 28.780606a19.859394 19.859394 0 0 1 0 28.780606l-328.921212 341.333333a19.859394 19.859394 0 0 1-28.780606 0L254.991515 543.030303z" fill="#FFFFFF" fillOpacity="1"></path></svg></i>
+                            <Button onClick={() => {
+                                this.handleExecuteResult(2)
+                            }} type='link' style={{padding: "0px 3px"}}>
+                                <i aria-label="图标: checked" className="anticon anticon-checked"
+                                   style={{width: "18px", height: "18px"}}>
+                                    <svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M509.750303 514.249697m-509.750303 0a509.750303 509.750303 0 1 0 1019.500606 0 509.750303 509.750303 0 1 0-1019.500606 0Z"
+                                            fill="#6AC259" fillOpacity="1"></path>
+                                        <path
+                                            d="M250.957576 537.05697a19.859394 19.859394 0 0 1 0-28.780606l28.780606-28.780606a19.859394 19.859394 0 0 1 28.780606 0l2.01697 2.094545 113.105454 121.250909a9.929697 9.929697 0 0 0 14.351515 0L713.69697 317.129697h2.094545a19.859394 19.859394 0 0 1 28.780606 0l28.780606 28.780606a19.859394 19.859394 0 0 1 0 28.780606l-328.921212 341.333333a19.859394 19.859394 0 0 1-28.780606 0L254.991515 543.030303z"
+                                            fill="#FFFFFF" fillOpacity="1"></path>
+                                    </svg>
+                                </i>
                             </Button>
                         </Tooltip>
 
                         <Tooltip placement="top" title={'阻塞'}>
-                            <Button onClick={() => { this.handleExecuteResult(3) }} type='link' style={{ padding: "0px 3px" }}>
-                                <i aria-label="图标: block" className="anticon anticon-block" style={{ width: "18px", height: "18px" }}><svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M512 1024A511.99872 511.99872 0 1 0 468.650775 1.794556 512.169386 512.169386 0 0 0 0.00128 512.00128a511.99872 511.99872 0 0 0 511.99872 511.99872z" fill="#FFFFFF" fillOpacity="1"></path><path d="M512 938.66688A426.6656 426.6656 0 1 0 511.914667 85.250347 426.6656 426.6656 0 0 0 512 938.66688z" fill="#d81e06" fillOpacity="1"></path><path d="M512 938.66688a426.6656 426.6656 0 0 0 426.6656-426.6656H85.3344a426.6656 426.6656 0 0 0 426.6656 426.6656z" fill="#FFED83" fillOpacity="1" data-spm-anchor-id="a313x.7781069.0.i5"></path></svg></i>
+                            <Button onClick={() => {
+                                this.handleExecuteResult(3)
+                            }} type='link' style={{padding: "0px 3px"}}>
+                                <i aria-label="图标: block" className="anticon anticon-block"
+                                   style={{width: "18px", height: "18px"}}>
+                                    <svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M512 1024A511.99872 511.99872 0 1 0 468.650775 1.794556 512.169386 512.169386 0 0 0 0.00128 512.00128a511.99872 511.99872 0 0 0 511.99872 511.99872z"
+                                            fill="#FFFFFF" fillOpacity="1"></path>
+                                        <path
+                                            d="M512 938.66688A426.6656 426.6656 0 1 0 511.914667 85.250347 426.6656 426.6656 0 0 0 512 938.66688z"
+                                            fill="#d81e06" fillOpacity="1"></path>
+                                        <path
+                                            d="M512 938.66688a426.6656 426.6656 0 0 0 426.6656-426.6656H85.3344a426.6656 426.6656 0 0 0 426.6656 426.6656z"
+                                            fill="#FFED83" fillOpacity="1"
+                                            data-spm-anchor-id="a313x.7781069.0.i5"></path>
+                                    </svg>
+                                </i>
                             </Button>
                         </Tooltip>
 
                         <Tooltip placement="top" title={'不适用'}>
-                            <Button onClick={() => { this.handleExecuteResult(4) }} type='link' style={{ padding: "0px 3px" }}>
-                                <i aria-label="图标: skip" className="anticon anticon-skip" style={{ width: "18px", height: "18px" }}><svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M747.3152 415.6416a256.0512 256.0512 0 0 0-489.472 96.768H341.504a170.6496 170.6496 0 0 1 327.6288-58.624l-115.0976 20.9408 227.84 116.736 48.2816-251.392-82.8416 75.5712zM0 512C0 229.2224 229.1712 0 512 0c282.7776 0 512 229.1712 512 512 0 282.7776-229.1712 512-512 512-282.7776 0-512-229.1712-512-512z" fill="#BE96F9" fillOpacity="1" p-id="577"></path></svg></i>
+                            <Button onClick={() => {
+                                this.handleExecuteResult(4)
+                            }} type='link' style={{padding: "0px 3px"}}>
+                                <i aria-label="图标: skip" className="anticon anticon-skip"
+                                   style={{width: "18px", height: "18px"}}>
+                                    <svg viewBox="0 0 1024 1024" width="18" height="18" version="1.1"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            d="M747.3152 415.6416a256.0512 256.0512 0 0 0-489.472 96.768H341.504a170.6496 170.6496 0 0 1 327.6288-58.624l-115.0976 20.9408 227.84 116.736 48.2816-251.392-82.8416 75.5712zM0 512C0 229.2224 229.1712 0 512 0c282.7776 0 512 229.1712 512 512 0 282.7776-229.1712 512-512 512-282.7776 0-512-229.1712-512-512z"
+                                            fill="#BE96F9" fillOpacity="1" p-id="577"></path>
+                                    </svg>
+                                </i>
                             </Button>
                         </Tooltip>
                     </div> : null
@@ -465,50 +549,52 @@ class App extends React.Component {
                 {
 
                     this.props.readOnly ? null : <>
-                        <div className='inline' style={{ width: 120 }}>
-                            <li key={0} style={{ cursor: 'pointer' }} onClick={partial(this.handlePriority, 0)} className={'km-priority-item2 priority-icon priority-0'}></li>
+                        <div className='inline' style={{width: 120}}>
+                            <li key={0} style={{cursor: 'pointer'}} onClick={partial(this.handlePriority, 0)}
+                                className={'km-priority-item2 priority-icon priority-0'}></li>
                             {priorityList}
                         </div>
 
-                        <div className='inline' style={{ width: 45 }}>
+                        <div className='inline' style={{width: 45}}>
                             <div>
                                 <Button
                                     onClick={
                                         partial(this.setFontColor, fontColor)
                                     }
-                                    style={{ color: fontColor, marginRight: '2px', padding: '0px 2px' }}
+                                    style={{color: fontColor, marginRight: '2px', padding: '0px 2px'}}
                                     type='link'
                                     icon='font-colors'
                                     size='small'
                                     disabled={!isNode}
                                 >
                                 </Button>
-                                <Popover placement='bottomLeft' content={<div><ColorPicker set={this.setFontColor} /></div>} >
+                                <Popover placement='bottomLeft'
+                                         content={<div><ColorPicker set={this.setFontColor}/></div>}>
                                     <span className='m-icon'>
-                                        <Icon className={isNode ? '' : 'icon-disabled'} type='caret-down' />
+                                        <Icon className={isNode ? '' : 'icon-disabled'} type='caret-down'/>
                                     </span>
                                 </Popover>
                             </div>
                             <div>
                                 <Button
                                     onClick={partial(this.setBgColor, bgColor)}
-                                    style={{ color: bgColor, marginRight: '2px' }}
+                                    style={{color: bgColor, marginRight: '2px'}}
                                     type='link'
                                     icon='bg-colors'
                                     size='small'
                                     disabled={!isNode}
                                 >
                                 </Button>
-                                <Popover placement='bottomLeft' content={<ColorPicker set={this.setBgColor} />} >
+                                <Popover placement='bottomLeft' content={<ColorPicker set={this.setBgColor}/>}>
                                     <span className='m-icon'>
-                                        <Icon className={isNode ? '' : 'icon-disabled'} type='caret-down' />
+                                        <Icon className={isNode ? '' : 'icon-disabled'} type='caret-down'/>
                                     </span>
                                 </Popover>
                             </div>
 
                         </div>
 
-                        <div className='inline' style={{ width: 80 }}>
+                        <div className='inline' style={{width: 80}}>
                             <Button
                                 disabled={!isNode}
                                 type='link'
@@ -516,8 +602,8 @@ class App extends React.Component {
                                 className='big-icon'
                                 onClick={partial(this.handleClear)}
                             >
-                                <Icon style={{ fontSize: "1.2em" }} type="highlight" />
-                                <br />
+                                <Icon style={{fontSize: "1.2em"}} type="highlight"/>
+                                <br/>
                                 清除样式
                             </Button>
 
@@ -526,37 +612,34 @@ class App extends React.Component {
                 }
 
 
-
-
-
-                <div className='inline' style={{ width: 50 }}>
+                <div className='inline' style={{width: 50}}>
                     <Button
                         type='link'
                         size='small'
                         className='big-icon'
                         onClick={partial(this.setSearch, true)}
                     >
-                        <Icon style={{ fontSize: "1.2em" }} type="search" />
-                        <br />
+                        <Icon style={{fontSize: "1.2em"}} type="search"/>
+                        <br/>
                         搜索
                     </Button>
 
                 </div>
                 {
                     this.props.readOnly ? null :
-                        <div style={{ marginLeft: 5 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', marginTop: 5 }}>
-                                <div className='inline' style={{ width: 220 }}>
+                        <div style={{marginLeft: 5}}>
+                            <div style={{display: 'flex', alignItems: 'center', marginTop: 5}}>
+                                <div className='inline' style={{width: 220}}>
                                     {this.renderTags()}
                                 </div>
 
-                                <div className='inline' style={{ width: 220 }}>
+                                <div className='inline' style={{width: 220}}>
                                     <Select
                                         mode="tags"
                                         size='small'
                                         maxTagCount={1}
                                         disabled={!isNode}
-                                        style={{ width: 200 }}
+                                        style={{width: 200}}
                                         value={this.state.currentResource.filter(item => typeof (item) === 'string' && item !== '已审' && item !== '待审')}
                                         onSelect={this.onTagSelect}
                                         onDeselect={this.onTagDeSelect}
@@ -573,7 +656,6 @@ class App extends React.Component {
                             </div>
                         </div>
                 }
-
 
 
                 <HyperLink
@@ -593,20 +675,26 @@ class App extends React.Component {
 
 
                 <ImageUpload
-                    uploadUrl = {this.props.uploadUrl}
+                    uploadUrl={this.props.uploadUrl}
                     nodeInfo={nodeInfo}
                     visible={image}
                     onCancel={this.setImage}
                 >
 
-
                 </ImageUpload>
+
+                {drawerVisible && (
+                    <NoteAddDrawer
+                        visible={drawerVisible}
+                        onCancel={() => this.setState({drawerVisible: false})}
+                        {...this.props}
+                        minder={minder}
+                    />
+                )}
             </div>
         );
     }
 }
-
-
 
 
 export default App

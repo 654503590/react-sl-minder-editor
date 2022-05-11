@@ -56,3 +56,4 @@ UI 框架使用 [Ant Design](https://github.com/ant-design/ant-design)
 
 # FAQ
 若出现页面的高度问题，即有滚动条的情况，可适当修改下  ```editorStyle``` 属性高度的值
+# react-sl-minder-editor
