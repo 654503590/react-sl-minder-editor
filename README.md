@@ -1,4 +1,4 @@
-# react-agiletc-minder-editor
+# react-sl-minder-editor
 
 基于 react 的 脑图编辑器
 
@@ -23,17 +23,17 @@ UI 框架使用 [Ant Design](https://github.com/ant-design/ant-design)
 1. 进入到前端项目的目录下，执行
 
 ```
-  npm install react-agiletc-minder-editor --save
+  npm install react-sl-minder-editor --save
 ```
 2. 替换项目中引用的组件
 
 替换原有的 
 
-```import AgileTCEditor from 'react-agiletc-editor';```
+```import AgileTCEditor from 'react-sl-editor';```
 
 为
 
-```import AgileTCEditor from 'react-agiletc-minder-editor';```
+```import AgileTCEditor from 'react-sl-minder-editor';```
 
 3. 重新编译前端即可，最好提前把server下dist目录先清理掉。
 
@@ -56,5 +56,6 @@ UI 框架使用 [Ant Design](https://github.com/ant-design/ant-design)
 
 # FAQ
 若出现页面的高度问题，即有滚动条的情况，可适当修改下  ```editorStyle``` 属性高度的值
+# react-sl-minder-editor
 # react-sl-minder-editor
 # react-sl-minder-editor
